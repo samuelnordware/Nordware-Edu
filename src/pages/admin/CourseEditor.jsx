@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext'
 import { safeName, uploadSimple } from '../../lib/upload'
 import { formatMinutes } from '../../lib/video'
 import { toast, toastError } from '../../lib/toast'
+import { restRequest } from '../../lib/rest'
 
 const EMPTY = {
   title: '',
@@ -93,13 +94,18 @@ export default function CourseEditor() {
       is_published: form.is_published,
       sort_order: Number(form.sort_order) || 0,
     }
-    const res = isNew
-      ? await supabase.from('courses').insert({ ...payload, created_by: user.id }).select('id').single()
-      : await supabase.from('courses').update(payload).eq('id', courseId).select('id').single()
-    setSaving(false)
-    if (res.error) return toastError(res.error)
-    toast('Treinamento salvo.')
-    if (isNew) navigate(`/admin/treinamento/${res.data.id}`, { replace: true })
+    try {
+      const rows = isNew
+        ? await restRequest('POST', 'courses', { body: { ...payload, created_by: user.id }, select: 'id' })
+        : await restRequest('PATCH', 'courses', { filters: { id: courseId }, body: payload, select: 'id' })
+      if (!rows.length) throw new Error('Sem permissão para salvar este treinamento.')
+      toast('Treinamento salvo.')
+      if (isNew) navigate(`/admin/treinamento/${rows[0].id}`, { replace: true })
+    } catch (err) {
+      toastError(err)
+    } finally {
+      setSaving(false)
+    }
   }
 
   async function remove() {

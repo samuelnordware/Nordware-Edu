@@ -46,7 +46,6 @@ export default function NavBar() {
           {isManager && <NavLink to="/admin/usuarios">Usuários</NavLink>}
           {isMaster && <NavLink to="/personalizar">Personalizar</NavLink>}
         </nav>
-        <ThemeToggle />
         <div className="nav__user" ref={menuRef}>
           <button
             className="user-btn"
@@ -92,6 +91,7 @@ export default function NavBar() {
             </div>
           )}
         </div>
+        <ThemeToggle />
       </div>
     </header>
   )

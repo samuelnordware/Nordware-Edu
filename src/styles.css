@@ -146,7 +146,6 @@ code { background: var(--elevated); padding: 2px 6px; border-radius: 4px; font-s
 .nav__links a:hover, .nav__links a.active { color: var(--text); }
 .nav__links a.active { font-weight: 600; }
 .nav__user { position: relative; }
-.nav__inner > .theme-toggle { margin-left: auto; }
 .avatar-btn { background: none; border: 0; padding: 0; cursor: pointer; border-radius: 50%; display: block; }
 .avatar {
   display: inline-grid; place-items: center; flex: none; border-radius: 50%; overflow: hidden;
@@ -563,7 +562,6 @@ code { background: var(--elevated); padding: 2px 6px; border-radius: 4px; font-s
 .user-btn__text strong { font-size: 0.92rem; font-weight: 700; max-width: 16ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .user-btn__text small { font-size: 0.75rem; color: var(--muted); }
 .user-btn__caret { width: 16px; height: 16px; fill: none; stroke: var(--muted); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.login__top { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
 
 /* Personalizar */
 .settings { display: grid; gap: 22px; }
@@ -688,10 +686,35 @@ code { background: var(--elevated); padding: 2px 6px; border-radius: 4px; font-s
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
 }
 
-/* Modo claro: destaque com transição mais curta para não acinzentar a capa */
-:root[data-theme='light'] .hero__media::after {
-  background:
-    linear-gradient(to right, var(--bg) 0%, color-mix(in srgb, var(--bg) 70%, transparent) 14%, transparent 42%),
-    linear-gradient(to top, var(--bg) 0%, transparent 16%);
+/* ---------------------------------------------------------------------
+   Capas sempre escuras: destaque, banner do treinamento e mural do login
+   ficam iguais nos dois modos. Só o restante da interface muda.
+   --------------------------------------------------------------------- */
+.hero,
+.course__banner {
+  --bg: #0f1923;
+  --surface: #162032;
+  --elevated: #1c2940;
+  --border: #1e2d42;
+  --border-strong: #2a3f5f;
+  --text: #f0f4f8;
+  --text-2: #a0aec0;
+  --muted: #8593a8;
+  --accent-text: #00d58b;
+  color: var(--text);
+  background: var(--bg);
 }
-:root[data-theme='light'] .rows { margin-top: 0; padding-top: 24px; }
+.login { background: #0f1923; }
+.login__panel { background: var(--surface); }
+
+/* Modo claro: menu sólido para não sobrepor a capa escura */
+:root[data-theme='light'] .nav { background: var(--bg); box-shadow: 0 1px 0 var(--border); }
+:root[data-theme='light'] .rows { margin-top: 0; padding-top: 32px; }
+
+/* Botão de tema: canto direito do menu e do login */
+.nav__inner > .theme-toggle { margin-left: 4px; }
+.nav__user { margin-left: auto; }
+.login__panel { position: relative; }
+.login__toggle {
+  position: absolute; top: calc(20px + env(safe-area-inset-top, 0px)); right: 20px;
+}

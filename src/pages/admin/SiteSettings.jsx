@@ -2,15 +2,17 @@ import { useEffect, useMemo, useState } from 'react'
 import { supabase, asset } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import { DEFAULT_SITE, loadSite, loginImages } from '../../lib/site'
-import { fitJpeg } from '../../lib/image'
+import { fitImage } from '../../lib/image'
+import { restRequest } from '../../lib/rest'
 import { ROLE_LABEL } from '../../lib/roles'
 import { toast, toastError } from '../../lib/toast'
 import Avatar from '../../components/Avatar'
 
 async function uploadSiteImage(file, folder) {
-  const blob = await fitJpeg(file, 1600)
-  const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 7)}.jpg`
-  const { error } = await supabase.storage.from('site').upload(path, blob, { contentType: 'image/jpeg' })
+  const blob = await fitImage(file, 1600)
+  const ext = blob.type === 'image/webp' ? 'webp' : blob.type === 'image/png' ? 'png' : 'jpg'
+  const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 7)}.${ext}`
+  const { error } = await supabase.storage.from('site').upload(path, blob, { contentType: blob.type })
   if (error) throw error
   return supabase.storage.from('site').getPublicUrl(path).data.publicUrl
 }
@@ -79,36 +81,30 @@ export default function SiteSettings() {
   async function save(e) {
     e.preventDefault()
     setSaving(true)
-    // Evita botao preso em "Publicando" se o servidor nao responder
-    const timeout = new Promise((resolve) =>
-      setTimeout(() => resolve({ error: new Error('O servidor não respondeu. Verifique a conexão e tente novamente.') }), 20000)
-    )
-    const request = supabase
-      .from('site_settings')
-      .update({
-        login_title: form.login_title.trim() || DEFAULT_SITE.login_title,
-        login_text: form.login_text.trim() || null,
-        login_images: form.login_images,
-        hero_greeting: form.hero_greeting.trim(),
-        hero_image_url: form.hero_image_url || null,
-        updated_by: user.id,
-      })
-      .eq('id', 1)
-      .select('id')
-    let result
     try {
-      result = await Promise.race([request, timeout])
+      const rows = await restRequest('PATCH', 'site_settings', {
+        filters: { id: 1 },
+        select: 'id',
+        body: {
+          login_title: form.login_title.trim() || DEFAULT_SITE.login_title,
+          login_text: form.login_text.trim() || null,
+          login_images: form.login_images,
+          hero_greeting: form.hero_greeting.trim(),
+          hero_image_url: form.hero_image_url || null,
+          updated_by: user.id,
+        },
+      })
+      // Nenhuma linha alterada = sem permissao (o RLS nao gera erro)
+      if (!rows.length) {
+        throw new Error('Sem permissão para salvar. Saia e entre novamente para atualizar seu acesso de ADM Master.')
+      }
+      await loadSite(true)
+      toast('Personalização publicada.')
     } catch (err) {
-      result = { error: err }
+      toastError(err)
+    } finally {
+      setSaving(false)
     }
-    setSaving(false)
-    if (result.error) return toastError(result.error)
-    // Sem linha atualizada = sem permissao (RLS nao gera erro)
-    if (!result.data?.length) {
-      return toastError('Não foi possível salvar. Saia e entre novamente para atualizar seu acesso de ADM Master.')
-    }
-    await loadSite(true)
-    toast('Personalização publicada.')
   }
 
   const preview = loginImages(form)

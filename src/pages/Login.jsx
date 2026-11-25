@@ -60,10 +60,10 @@ export default function Login() {
         ))}
       </div>
       <div className="login__panel">
-        <div className="login__top">
-          <Logo size="lg" />
+        <div className="login__toggle">
           <ThemeToggle />
         </div>
+        <Logo size="lg" />
         <h1>
           {mode === 'signin' && (site?.login_title || 'Entre para continuar seus treinamentos')}
           {mode === 'signup' && 'Crie sua conta de aluno'}

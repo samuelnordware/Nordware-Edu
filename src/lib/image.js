@@ -9,6 +9,8 @@ export function squareJpeg(file, size = 320) {
       canvas.width = size
       canvas.height = size
       const ctx = canvas.getContext('2d')
+      ctx.fillStyle = '#ffffff'
+      ctx.fillRect(0, 0, size, size)
       ctx.drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, size, size)
       URL.revokeObjectURL(url)
       canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('Não foi possível ler a imagem.'))), 'image/jpeg', 0.88)
@@ -21,8 +23,9 @@ export function squareJpeg(file, size = 320) {
   })
 }
 
-// Reduz a imagem para no maximo maxWidth de largura, em JPEG
-export function fitJpeg(file, maxWidth = 1600) {
+// Reduz a imagem para no maximo maxWidth de largura.
+// WebP preserva a transparencia de PNGs (JPEG deixava o fundo preto).
+export function fitImage(file, maxWidth = 1600) {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file)
     const img = new Image()
@@ -33,7 +36,7 @@ export function fitJpeg(file, maxWidth = 1600) {
       canvas.height = Math.round(img.height * scale)
       canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height)
       URL.revokeObjectURL(url)
-      canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('Não foi possível ler a imagem.'))), 'image/jpeg', 0.86)
+      canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('Não foi possível ler a imagem.'))), 'image/webp', 0.88)
     }
     img.onerror = () => {
       URL.revokeObjectURL(url)

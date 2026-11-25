@@ -8,6 +8,7 @@ import { toastError } from '../lib/toast'
 import CourseRow from '../components/CourseRow'
 import ProgressBar from '../components/ProgressBar'
 import { useSite, greeting } from '../lib/site'
+import { canEditCourse } from '../lib/roles'
 
 export default function Browse() {
   const { user, isStaff, profile } = useAuth()
@@ -88,6 +89,11 @@ export default function Browse() {
             <Link className="btn btn--glass" to={`/treinamento/${hero.id}`}>
               Ver aulas
             </Link>
+            {canEditCourse(profile, hero) && (
+              <Link className="btn btn--glass" to={`/admin/treinamento/${hero.id}`}>
+                Editar textos
+              </Link>
+            )}
           </div>
         </div>
       </section>
