@@ -2,9 +2,11 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Logo from './Logo'
+import Avatar from './Avatar'
+import { ROLE_LABEL } from '../lib/roles'
 
 export default function NavBar() {
-  const { profile, isAdmin, signOut } = useAuth()
+  const { profile, isStaff, isManager, signOut } = useAuth()
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
   const menuRef = useRef(null)
@@ -24,11 +26,6 @@ export default function NavBar() {
   }, [])
 
   const name = profile?.full_name || profile?.email?.split('@')[0] || ''
-  const initials = name
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((p) => p[0]?.toUpperCase())
-    .join('')
 
   return (
     <header className={'nav' + (scrolled ? ' nav--solid' : '')}>
@@ -40,37 +37,38 @@ export default function NavBar() {
           <NavLink to="/" end>
             Início
           </NavLink>
-          {isAdmin && (
-            <>
-              <NavLink to="/admin" end>
-                Treinamentos
-              </NavLink>
-              <NavLink to="/admin/usuarios">Usuários</NavLink>
-            </>
+          {isStaff && (
+            <NavLink to="/admin" end>
+              Treinamentos
+            </NavLink>
           )}
+          {isManager && <NavLink to="/admin/usuarios">Usuários</NavLink>}
         </nav>
         <div className="nav__user" ref={menuRef}>
           <button
-            className="avatar"
+            className="avatar-btn"
             onClick={() => setOpen((v) => !v)}
             aria-haspopup="menu"
             aria-expanded={open}
             aria-label="Menu da conta"
           >
-            {initials || '?'}
+            <Avatar name={name} url={profile?.avatar_url} size={36} />
           </button>
           {open && (
             <div className="menu" role="menu">
               <div className="menu__head">
                 <strong>{name}</strong>
-                <span>{isAdmin ? 'Administrador' : 'Aluno'}</span>
+                <span>{ROLE_LABEL[profile?.role] || ''}</span>
               </div>
-              {isAdmin && (
+              <button role="menuitem" onClick={() => { setOpen(false); navigate('/perfil') }}>
+                Meu perfil
+              </button>
+              {isStaff && (
                 <button role="menuitem" onClick={() => { setOpen(false); navigate('/admin') }}>
                   Gerenciar treinamentos
                 </button>
               )}
-              {isAdmin && (
+              {isManager && (
                 <button role="menuitem" onClick={() => { setOpen(false); navigate('/admin/usuarios') }}>
                   Usuários
                 </button>

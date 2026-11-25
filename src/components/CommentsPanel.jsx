@@ -3,9 +3,11 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { timeAgo } from '../lib/video'
 import { toastError } from '../lib/toast'
+import Avatar from './Avatar'
+import { ROLE_LABEL } from '../lib/roles'
 
-export default function CommentsPanel({ lessonId, onCountChange }) {
-  const { user, isAdmin } = useAuth()
+export default function CommentsPanel({ lessonId, onCountChange, canModerate }) {
+  const { user } = useAuth()
   const [comments, setComments] = useState(null)
   const [body, setBody] = useState('')
   const [sending, setSending] = useState(false)
@@ -13,7 +15,7 @@ export default function CommentsPanel({ lessonId, onCountChange }) {
   async function load() {
     const { data } = await supabase
       .from('lesson_comments')
-      .select('id, user_id, author_name, author_role, body, created_at')
+      .select('id, user_id, author_name, author_role, author_avatar, body, created_at')
       .eq('lesson_id', lessonId)
       .order('created_at', { ascending: false })
     setComments(data || [])
@@ -84,15 +86,13 @@ export default function CommentsPanel({ lessonId, onCountChange }) {
       <ul className="comments__list">
         {comments?.map((c) => (
           <li key={c.id}>
-            <div className="comments__avatar" aria-hidden="true">
-              {(c.author_name || '?').slice(0, 1).toUpperCase()}
-            </div>
+            <Avatar name={c.author_name} url={c.author_avatar} size={36} />
             <div className="comments__content">
               <div className="comments__meta">
                 <strong>{c.author_name}</strong>
-                {c.author_role === 'admin' && <span className="chip chip--brand">Instrutor</span>}
+                {c.author_role !== 'student' && ROLE_LABEL[c.author_role] && <span className="chip chip--brand">{ROLE_LABEL[c.author_role]}</span>}
                 <time dateTime={c.created_at}>{timeAgo(c.created_at)}</time>
-                {(c.user_id === user.id || isAdmin) && (
+                {(c.user_id === user.id || canModerate) && (
                   <button className="link-btn" onClick={() => remove(c)}>
                     Excluir
                   </button>

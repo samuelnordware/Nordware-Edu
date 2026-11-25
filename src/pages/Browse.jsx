@@ -9,7 +9,7 @@ import CourseRow from '../components/CourseRow'
 import ProgressBar from '../components/ProgressBar'
 
 export default function Browse() {
-  const { user, isAdmin, profile } = useAuth()
+  const { user, isStaff, profile } = useAuth()
   const [courses, setCourses] = useState(null)
 
   useEffect(() => {
@@ -18,7 +18,7 @@ export default function Browse() {
 
   const { hero, continuing, rows, finished } = useMemo(() => {
     if (!courses) return {}
-    const visible = courses.filter((c) => c.stats.lessonCount > 0 || isAdmin)
+    const visible = courses.filter((c) => c.stats.lessonCount > 0 || isStaff)
     const hero =
       visible.find((c) => c.is_featured && c.is_published) || visible.find((c) => c.is_published) || visible[0]
     const continuing = visible
@@ -32,7 +32,7 @@ export default function Browse() {
       groups.get(key).push(c)
     })
     return { hero, continuing, rows: [...groups.entries()], finished }
-  }, [courses, isAdmin])
+  }, [courses, isStaff])
 
   if (!courses) return <div className="page-loading" aria-busy="true" />
 
@@ -40,7 +40,7 @@ export default function Browse() {
     return (
       <div className="empty-state">
         <h1>Nenhum treinamento publicado ainda</h1>
-        {isAdmin ? (
+        {isStaff ? (
           <>
             <p>Crie o primeiro treinamento e publique para os alunos.</p>
             <Link className="btn btn--primary" to="/admin/treinamento/novo">

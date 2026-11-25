@@ -66,7 +66,7 @@ export default function CourseEditor() {
     if (!file) return
     setUploading(true)
     try {
-      const path = `${isNew ? 'novo' : courseId}/${safeName(file.name)}`
+      const path = `${user.id}/${safeName(file.name)}`
       await uploadSimple({ bucket: 'covers', path, file })
       const { data } = supabase.storage.from('covers').getPublicUrl(path)
       setForm((f) => ({ ...f, cover_url: data.publicUrl }))

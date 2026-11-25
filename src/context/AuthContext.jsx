@@ -16,7 +16,7 @@ export function AuthProvider({ children }) {
     }
     const { data } = await supabase
       .from('profiles')
-      .select('id, email, full_name, role')
+      .select('id, email, full_name, role, avatar_url')
       .eq('id', userId)
       .maybeSingle()
     setProfile(data)
@@ -46,7 +46,10 @@ export function AuthProvider({ children }) {
     session,
     user: session?.user ?? null,
     profile,
-    isAdmin: profile?.role === 'admin',
+    isManager: profile?.role === 'manager',
+    isTeacher: profile?.role === 'teacher',
+    // professor ou gestor: pode publicar conteudo
+    isStaff: profile?.role === 'manager' || profile?.role === 'teacher',
     loading,
     signIn: (email, password) => supabase.auth.signInWithPassword({ email, password }),
     signUp: (email, password, fullName) =>

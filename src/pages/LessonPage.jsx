@@ -8,10 +8,11 @@ import VideoPlayer from '../components/VideoPlayer'
 import ChecklistPanel from '../components/ChecklistPanel'
 import DocumentsPanel from '../components/DocumentsPanel'
 import CommentsPanel from '../components/CommentsPanel'
+import { canEditCourse } from '../lib/roles'
 
 export default function LessonPage() {
   const { lessonId } = useParams()
-  const { user, isAdmin } = useAuth()
+  const { user, profile } = useAuth()
   const navigate = useNavigate()
   const [lesson, setLesson] = useState(undefined)
   const [siblings, setSiblings] = useState([])
@@ -25,7 +26,7 @@ export default function LessonPage() {
     ;(async () => {
       const { data: l, error } = await supabase
         .from('lessons')
-        .select('*, courses(id, title, accent_color)')
+        .select('*, courses(id, title, accent_color, created_by)')
         .eq('id', lessonId)
         .maybeSingle()
       if (!active) return
@@ -42,7 +43,7 @@ export default function LessonPage() {
       ])
       if (!active) return
       setLesson(l)
-      setSiblings((sibs || []).filter((s) => s.is_published || isAdmin))
+      setSiblings((sibs || []).filter((s) => s.is_published || canEditCourse(profile, l.courses)))
       setProgress(new Map((prog || []).map((p) => [p.lesson_id, p])))
       // registra a visita (alimenta "Continuar assistindo")
       supabase
@@ -56,7 +57,7 @@ export default function LessonPage() {
     return () => {
       active = false
     }
-  }, [lessonId, user.id, isAdmin])
+  }, [lessonId, user.id, profile])
 
   const setChecklistCount = useCallback((c) => setCounts((s) => ({ ...s, checklist: c })), [])
   const setDocsCount = useCallback((n) => setCounts((s) => ({ ...s, docs: n })), [])
@@ -78,6 +79,7 @@ export default function LessonPage() {
   const next = siblings[idx + 1]
   const prev = siblings[idx - 1]
   const completed = Boolean(progress.get(lesson.id)?.completed_at)
+  const canEdit = canEditCourse(profile, lesson.courses)
 
   async function toggleComplete() {
     const completed_at = completed ? null : new Date().toISOString()
@@ -127,7 +129,7 @@ export default function LessonPage() {
             <h1>{lesson.title}</h1>
           </div>
           <div className="lesson__actions">
-            {isAdmin && (
+            {canEdit && (
               <Link className="btn btn--ghost btn--sm" to={`/admin/aula/${lesson.id}`}>
                 Editar aula
               </Link>
@@ -163,7 +165,7 @@ export default function LessonPage() {
           <DocumentsPanel lessonId={lesson.id} onCountChange={setDocsCount} />
         </div>
         <div role="tabpanel" id="panel-comments" aria-labelledby="tab-comments" hidden={tab !== 'comments'}>
-          <CommentsPanel lessonId={lesson.id} onCountChange={setCommentsCount} />
+          <CommentsPanel lessonId={lesson.id} onCountChange={setCommentsCount} canModerate={canEdit} />
         </div>
       </div>
 

@@ -11,6 +11,7 @@ import AdminCourses from './pages/admin/AdminCourses'
 import CourseEditor from './pages/admin/CourseEditor'
 import LessonEditor from './pages/admin/LessonEditor'
 import AdminUsers from './pages/admin/AdminUsers'
+import Profile from './pages/Profile'
 
 function Splash() {
   return (
@@ -35,10 +36,17 @@ function RequireAuth() {
   )
 }
 
-function RequireAdmin() {
-  const { isAdmin, profile } = useAuth()
+function RequireStaff() {
+  const { isStaff, profile } = useAuth()
   if (!profile) return <Splash />
-  if (!isAdmin) return <Navigate to="/" replace />
+  if (!isStaff) return <Navigate to="/" replace />
+  return <Outlet />
+}
+
+function RequireManager() {
+  const { isManager, profile } = useAuth()
+  if (!profile) return <Splash />
+  if (!isManager) return <Navigate to="/" replace />
   return <Outlet />
 }
 
@@ -51,11 +59,14 @@ export default function App() {
           <Route index element={<Browse />} />
           <Route path="treinamento/:courseId" element={<CoursePage />} />
           <Route path="aula/:lessonId" element={<LessonPage />} />
-          <Route path="admin" element={<RequireAdmin />}>
+          <Route path="perfil" element={<Profile />} />
+          <Route path="admin" element={<RequireStaff />}>
             <Route index element={<AdminCourses />} />
             <Route path="treinamento/:courseId" element={<CourseEditor />} />
             <Route path="aula/:lessonId" element={<LessonEditor />} />
-            <Route path="usuarios" element={<AdminUsers />} />
+            <Route element={<RequireManager />}>
+              <Route path="usuarios" element={<AdminUsers />} />
+            </Route>
           </Route>
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

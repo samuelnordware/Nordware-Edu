@@ -6,10 +6,11 @@ import { asset } from '../lib/supabase'
 import { formatMinutes } from '../lib/video'
 import { toastError } from '../lib/toast'
 import ProgressBar from '../components/ProgressBar'
+import { canEditCourse } from '../lib/roles'
 
 export default function CoursePage() {
   const { courseId } = useParams()
-  const { user, isAdmin } = useAuth()
+  const { user, profile } = useAuth()
   const [course, setCourse] = useState(undefined)
 
   useEffect(() => {
@@ -57,7 +58,7 @@ export default function CoursePage() {
                 {stats.percent === 100 ? 'Rever' : stats.started ? 'Continuar' : 'Começar'}
               </Link>
             )}
-            {isAdmin && (
+            {canEditCourse(profile, course) && (
               <Link className="btn btn--glass" to={`/admin/treinamento/${course.id}`}>
                 Editar treinamento
               </Link>

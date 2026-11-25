@@ -3,7 +3,9 @@
 Plataforma de treinamentos da Nordware no estilo Netflix, com checklist, documentos e comentários em cada aula.
 
 - **Aluno:** assiste às aulas, marca o checklist, baixa documentos, comenta e acompanha o progresso.
-- **Administrador:** cria treinamentos e aulas, envia capas, define a ordem, publica ou oculta conteúdo e gerencia permissões.
+- **Professor:** tudo do aluno, mais criar e publicar os próprios treinamentos e moderar os comentários deles.
+- **Gestor:** publica e edita qualquer treinamento, cria, exclui e altera o papel de usuários e redefine senhas.
+- **Todos:** trocam a foto, o nome e a senha em Meu perfil.
 - **Vídeos:** YouTube (não listado), Vimeo (inclusive privado com código) ou envio do computador para o Supabase Storage.
 
 Tecnologias: React 18, Vite, Supabase (Auth, Postgres com RLS, Storage e Realtime).
@@ -13,9 +15,11 @@ Tecnologias: React 18, Vite, Supabase (Auth, Postgres com RLS, Storage e Realtim
 1. No painel do Supabase, abra **SQL Editor > New query**.
 2. Cole e execute `supabase/migrations/0001_nordware_edu_schema.sql`.
 3. Em seguida, execute `supabase/seed.sql` (cria os treinamentos Enviando, Roter e Bahn). Execute apenas uma vez.
-4. Em **Authentication > Users**, crie o usuário do ADM master (samuel.bagolin@nordware.io) com **Auto Confirm User** marcado, caso ele ainda não exista. Esse e-mail recebe o papel de administrador automaticamente.
-5. Em **Authentication > URL Configuration**, informe a URL do site publicado em **Site URL** e em **Redirect URLs** (necessário para a redefinição de senha).
-6. Para vídeos grandes, ajuste **Storage > Settings > Upload file size limit** conforme o seu plano.
+4. Execute `supabase/migrations/0002_papeis_e_fotos.sql` (papéis de aluno, professor e gestor, e fotos de perfil).
+5. Publique a função de gestão de usuários: em **Edge Functions > Deploy a new function > Via Editor**, use o nome `admin-users`, cole o conteúdo de `supabase/functions/admin-users/index.ts` e clique em **Deploy function**. Mantenha a verificação de JWT ligada.
+6. Em **Authentication > Users**, crie o usuário do ADM master (samuel.bagolin@nordware.io) com **Auto Confirm User** marcado, caso ele ainda não exista. Esse e-mail recebe o papel de administrador automaticamente.
+7. Em **Authentication > URL Configuration**, informe a URL do site publicado em **Site URL** e em **Redirect URLs** (necessário para a redefinição de senha).
+8. Para vídeos grandes, ajuste **Storage > Settings > Upload file size limit** conforme o seu plano.
 
 ## 2. Rodar localmente
 
@@ -27,13 +31,13 @@ npm run dev
 
 Use somente a chave pública (publishable/anon). Nunca coloque a chave `service_role` no frontend.
 
-## 3. Publicar no GitHub Pages
+## 3. Publicar na Vercel
 
-1. No repositório, abra **Settings > Secrets and variables > Actions** e crie os secrets `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY`.
-2. Em **Settings > Pages**, selecione **Source: GitHub Actions**.
-3. Cada envio para a branch `main` publica o site em `https://samuelnordware.github.io/Nordware-Edu/`.
+1. Importe o repositório na Vercel com o preset **Vite**.
+2. Em **Settings > Environment Variables**, crie `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY`.
+3. Cada envio para a branch `main` publica uma nova versão automaticamente.
 
-Opcional: crie a variável `VITE_ALLOW_SIGNUP` com valor `false` para esconder o cadastro aberto de alunos.
+Para que somente gestores criem contas: crie a variável `VITE_ALLOW_SIGNUP` com valor `false` na Vercel e desative **Allow new users to sign up** em **Authentication > Sign In / Providers** no Supabase.
 
 ## Observações
 
@@ -45,8 +49,8 @@ Opcional: crie a variável `VITE_ALLOW_SIGNUP` com valor `false` para esconder o
 ## Estrutura
 
 ```
-supabase/          schema, RLS, buckets e dados iniciais
-src/pages          Início, Treinamento, Aula, Login
+supabase/          schema, RLS, buckets, dados iniciais e função admin-users
+src/pages          Início, Treinamento, Aula, Login, Meu perfil
 src/pages/admin    Treinamentos, Editor de treinamento, Editor de aula, Usuários
 src/components     Player, Checklist, Documentos, Comentários, Navegação
 public/covers      Capas dos treinamentos
