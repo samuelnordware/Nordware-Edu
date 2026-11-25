@@ -722,9 +722,9 @@ code { background: var(--elevated); padding: 2px 6px; border-radius: 4px; font-s
 /* =====================================================================
    Nordware Edu 2: visual tecnológico (estilo área de membros)
    ===================================================================== */
-.mono { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.mono { font-family: var(--font); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
 kbd {
-  font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.72rem; color: var(--muted);
+  font-family: var(--font); font-size: 0.72rem; color: var(--muted);
   border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 5px; padding: 1px 6px; background: var(--bg);
 }
 
@@ -807,7 +807,7 @@ body::after {
 }
 .palette__list button.is-active { background: var(--ok-bg); }
 .palette__kind {
-  font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.7rem; color: var(--ok-text);
+  font-family: var(--font); font-size: 0.7rem; color: var(--ok-text);
   border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent); border-radius: 5px; padding: 2px 6px; flex: none; width: 96px; text-align: center;
 }
 .palette__text { display: grid; min-width: 0; }
@@ -924,14 +924,14 @@ body::after {
 .outline__head:hover { background: var(--elevated); }
 .outline__ring {
   width: 34px; height: 34px; flex: none; border-radius: 50%; display: grid; place-items: center;
-  border: 2px solid var(--border-strong); font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.72rem; color: var(--muted);
+  border: 2px solid var(--border-strong); font-family: var(--font); font-size: 0.72rem; color: var(--muted);
 }
 .outline__ring.is-partial { border-color: color-mix(in srgb, var(--primary) 60%, transparent); color: var(--ok-text); }
 .outline__ring.is-done { border-color: var(--primary); color: var(--primary); }
 .outline__ring svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
 .outline__title { flex: 1; display: grid; min-width: 0; }
 .outline__title strong { font-weight: 700; font-size: 0.98rem; line-height: 1.3; }
-.outline__title small { color: var(--muted); font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.72rem; }
+.outline__title small { color: var(--muted); font-family: var(--font); font-size: 0.72rem; }
 .outline__chev { width: 18px; height: 18px; fill: none; stroke: var(--muted); stroke-width: 2; stroke-linecap: round; transition: transform 200ms var(--ease-out); }
 .outline__head[aria-expanded='true'] .outline__chev { transform: rotate(180deg); }
 .outline__lessons { list-style: none; margin: 0 0 6px; padding: 2px 0 2px 25px; position: relative; display: grid; gap: 1px; }
@@ -1089,3 +1089,40 @@ body::after {
 @media (max-width: 520px) {
   .topbar__admin { display: none; }
 }
+
+
+/* Tipografia unica: numeros na Nunito Sans com algarismos alinhados */
+.mono { font-family: var(--font); font-variant-numeric: tabular-nums; letter-spacing: 0; font-weight: 600; }
+kbd { font-weight: 700; }
+.outline__ring { font-weight: 800; font-size: 0.78rem; }
+.outline__title small { font-size: 0.78rem; font-weight: 600; }
+.palette__kind { font-size: 0.72rem; font-weight: 700; }
+.stat__value { font-weight: 800; letter-spacing: -0.02em; }
+.hero__facts.mono, .lesson__pos.mono { font-weight: 600; }
+
+/* Cartao de curso mais limpo */
+.card__body { padding: 14px 16px 16px; gap: 8px; }
+.card__body h3 { font-size: 1.02rem; font-weight: 800; }
+.card__meta { display: flex; flex-wrap: wrap; gap: 6px; }
+.card__meta span {
+  font-size: 0.76rem; font-weight: 700; color: var(--text-2); padding: 3px 9px; border-radius: 99px;
+  background: var(--elevated); border: 1px solid var(--border);
+}
+.card__progress { font-size: 0.8rem; font-weight: 800; color: var(--text-2); font-variant-numeric: tabular-nums; }
+.card__progress .is-done { color: var(--ok-text); }
+.card__progress .progress { height: 5px; }
+.chip--new { position: absolute; top: 10px; right: 10px; left: auto; background: var(--primary); color: var(--on-primary); }
+
+/* Fileiras com bolinhas que passam sozinhas */
+.row__ctrl { display: none; }
+.row__dots { display: flex; justify-content: center; gap: 8px; margin-top: 6px; }
+.row__dots button {
+  width: 9px; height: 9px; padding: 0; border-radius: 99px; cursor: pointer;
+  border: 1.5px solid var(--border-strong); background: transparent;
+  transition: width 250ms var(--ease-out), background-color 250ms var(--ease-out), border-color 250ms var(--ease-out);
+}
+.row__dots button:hover { border-color: var(--primary); }
+.row__dots button.is-active { width: 26px; background: var(--primary); border-color: var(--primary); }
+.row__track { scroll-behavior: smooth; }
+.card__media .chip--new { left: auto; right: 10px; font-weight: 800; }
+.row__head h2 { font-weight: 800; }

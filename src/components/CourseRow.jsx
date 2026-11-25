@@ -1,31 +1,63 @@
-import { useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import CourseCard from './CourseCard'
 
+// Fileira de cursos que passa sozinha, com bolinhas indicando a página
 export default function CourseRow({ title, courses }) {
   const track = useRef(null)
-  if (!courses.length) return null
-  const scroll = (dir) => {
+  const [pages, setPages] = useState(1)
+  const [page, setPage] = useState(0)
+  const [paused, setPaused] = useState(false)
+
+  useEffect(() => {
     const el = track.current
-    el.scrollBy({ left: dir * el.clientWidth * 0.85, behavior: 'smooth' })
-  }
+    if (!el) return
+    const measure = () => setPages(Math.max(1, Math.ceil(el.scrollWidth / el.clientWidth - 0.02)))
+    const onScroll = () => setPage(Math.min(Math.round(el.scrollLeft / el.clientWidth), pages - 1))
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    el.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      ro.disconnect()
+      el.removeEventListener('scroll', onScroll)
+    }
+  }, [courses.length, pages])
+
+  const goTo = (p) => track.current?.scrollTo({ left: p * track.current.clientWidth, behavior: 'smooth' })
+
+  useEffect(() => {
+    if (pages < 2 || paused || matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const t = setInterval(() => goTo((page + 1) % pages), 5000)
+    return () => clearInterval(t)
+  }, [pages, page, paused])
+
+  if (!courses.length) return null
+
   return (
-    <section className="row" aria-label={title}>
+    <section
+      className="row"
+      aria-label={title}
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocus={() => setPaused(true)}
+      onBlur={() => setPaused(false)}
+    >
       <div className="row__head">
         <h2>{title}</h2>
-        <div className="row__ctrl">
-          <button onClick={() => scroll(-1)} aria-label="Voltar">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
-          </button>
-          <button onClick={() => scroll(1)} aria-label="Avançar">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" /></svg>
-          </button>
-        </div>
       </div>
       <div className="row__track" ref={track}>
         {courses.map((c) => (
           <CourseCard key={c.id} course={c} />
         ))}
       </div>
+      {pages > 1 && (
+        <div className="row__dots">
+          {Array.from({ length: pages }, (_, i) => (
+            <button key={i} className={i === page ? 'is-active' : ''} onClick={() => goTo(i)}
+              aria-label={`Página ${i + 1} de ${pages}`} aria-current={i === page} />
+          ))}
+        </div>
+      )}
     </section>
   )
 }
