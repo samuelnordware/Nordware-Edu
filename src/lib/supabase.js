@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { processLock } from '@supabase/auth-js'
 
 export const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
 const SUPABASE_KEY =
@@ -9,7 +10,14 @@ export const supabaseConfigured = Boolean(SUPABASE_URL && SUPABASE_KEY)
 export const supabase = supabaseConfigured
   ? createClient(SUPABASE_URL, SUPABASE_KEY, {
       // PKCE devolve ?code= na URL, sem conflitar com as rotas em #/
-      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: 'pkce' },
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        flowType: 'pkce',
+        // Bloqueio por aba: evita requisicoes travadas apos trocar de aba
+        lock: processLock,
+      },
     })
   : null
 

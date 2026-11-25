@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Logo from '../components/Logo'
+import ThemeToggle from '../components/ThemeToggle'
 import { asset } from '../lib/supabase'
 import { useSite, loginImages } from '../lib/site'
 
@@ -59,7 +60,10 @@ export default function Login() {
         ))}
       </div>
       <div className="login__panel">
-        <Logo size="lg" />
+        <div className="login__top">
+          <Logo size="lg" />
+          <ThemeToggle />
+        </div>
         <h1>
           {mode === 'signin' && (site?.login_title || 'Entre para continuar seus treinamentos')}
           {mode === 'signup' && 'Crie sua conta de aluno'}

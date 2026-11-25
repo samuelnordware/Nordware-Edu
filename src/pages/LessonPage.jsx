@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
+import { supabase, asset } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { formatMinutes } from '../lib/video'
 import { toast, toastError } from '../lib/toast'
@@ -8,6 +8,7 @@ import VideoPlayer from '../components/VideoPlayer'
 import ChecklistPanel from '../components/ChecklistPanel'
 import DocumentsPanel from '../components/DocumentsPanel'
 import CommentsPanel from '../components/CommentsPanel'
+import ProgressBar from '../components/ProgressBar'
 import { canEditCourse } from '../lib/roles'
 
 export default function LessonPage() {
@@ -26,7 +27,7 @@ export default function LessonPage() {
     ;(async () => {
       const { data: l, error } = await supabase
         .from('lessons')
-        .select('*, courses(id, title, accent_color, created_by)')
+        .select('*, courses(id, title, accent_color, created_by, cover_url)')
         .eq('id', lessonId)
         .maybeSingle()
       if (!active) return
@@ -81,19 +82,32 @@ export default function LessonPage() {
   const completed = Boolean(progress.get(lesson.id)?.completed_at)
   const canEdit = canEditCourse(profile, lesson.courses)
 
-  async function toggleComplete() {
-    const completed_at = completed ? null : new Date().toISOString()
+  const doneCount = siblings.filter((s) => progress.get(s.id)?.completed_at).length
+
+  // Marca ou desmarca qualquer aula do treinamento
+  async function setComplete(lessonId, value) {
+    const completed_at = value ? new Date().toISOString() : null
+    const before = progress
+    const m = new Map(progress)
+    m.set(lessonId, { lesson_id: lessonId, completed_at })
+    setProgress(m)
     const { error } = await supabase
       .from('lesson_progress')
       .upsert(
-        { user_id: user.id, lesson_id: lesson.id, completed_at, last_seen_at: new Date().toISOString() },
+        { user_id: user.id, lesson_id: lessonId, completed_at, last_seen_at: new Date().toISOString() },
         { onConflict: 'user_id,lesson_id' }
       )
-    if (error) return toastError(error)
-    const m = new Map(progress)
-    m.set(lesson.id, { lesson_id: lesson.id, completed_at })
-    setProgress(m)
-    if (!completed) {
+    if (error) {
+      setProgress(before)
+      toastError(error)
+      return false
+    }
+    return true
+  }
+
+  async function toggleComplete() {
+    const ok = await setComplete(lesson.id, !completed)
+    if (ok && !completed) {
       toast('Aula concluída.')
       if (next) navigate(`/aula/${next.id}`)
     }
@@ -170,36 +184,62 @@ export default function LessonPage() {
       </div>
 
       <aside className="lesson__side" aria-label="Aulas do treinamento">
-        <h2>{lesson.courses?.title}</h2>
-        <ol className="lesson-list lesson-list--compact">
-          {siblings.map((s, i) => (
-            <li key={s.id}>
-              <Link
-                to={`/aula/${s.id}`}
-                className={(s.id === lesson.id ? 'is-current ' : '') + (progress.get(s.id)?.completed_at ? 'is-done' : '')}
-                aria-current={s.id === lesson.id ? 'page' : undefined}
-              >
-                <span className="lesson-list__num">{i + 1}</span>
-                <span className="lesson-list__title">{s.title}</span>
-                <span className="lesson-list__time">{formatMinutes(s.duration_minutes)}</span>
-              </Link>
-            </li>
-          ))}
-        </ol>
-        <div className="lesson__nav">
-          {prev ? (
-            <Link className="btn btn--ghost btn--sm" to={`/aula/${prev.id}`}>
-              Aula anterior
-            </Link>
-          ) : (
-            <span />
+        <div className="side__head">
+          {lesson.courses?.cover_url && (
+            <img className="side__cover" src={asset(lesson.courses.cover_url)} alt="" />
           )}
-          {next && (
-            <Link className="btn btn--ghost btn--sm" to={`/aula/${next.id}`}>
-              Próxima aula
-            </Link>
-          )}
+          <h2>{lesson.courses?.title}</h2>
+          <div className="side__progress">
+            <ProgressBar value={siblings.length ? (doneCount / siblings.length) * 100 : 0} label="Progresso no treinamento" />
+            <span>
+              {doneCount} de {siblings.length} {siblings.length === 1 ? 'aula concluída' : 'aulas concluídas'}
+            </span>
+          </div>
         </div>
+
+        <ol className="side__list">
+          {siblings.map((s, i) => {
+            const done = Boolean(progress.get(s.id)?.completed_at)
+            const current = s.id === lesson.id
+            return (
+              <li key={s.id} className={(current ? 'is-current ' : '') + (done ? 'is-done' : '')}>
+                <button
+                  className="tick"
+                  onClick={() => setComplete(s.id, !done)}
+                  aria-pressed={done}
+                  aria-label={done ? `Desmarcar ${s.title}` : `Marcar ${s.title} como concluída`}
+                  title={done ? 'Desmarcar aula' : 'Marcar como concluída'}
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 12.5l4 4 9-9" /></svg>
+                </button>
+                <Link to={`/aula/${s.id}`} className="side__link" aria-current={current ? 'page' : undefined}>
+                  <span className="side__title">{s.title}</span>
+                  <span className="side__meta">
+                    {current ? 'Assistindo agora' : `Aula ${i + 1}`}
+                    {s.duration_minutes ? `, ${formatMinutes(s.duration_minutes)}` : ''}
+                  </span>
+                </Link>
+              </li>
+            )
+          })}
+        </ol>
+
+        {(prev || next) && (
+          <div className="lesson__nav">
+            {prev ? (
+              <Link className="btn btn--ghost btn--sm" to={`/aula/${prev.id}`}>
+                Aula anterior
+              </Link>
+            ) : (
+              <span />
+            )}
+            {next && (
+              <Link className="btn btn--primary btn--sm" to={`/aula/${next.id}`}>
+                Próxima aula
+              </Link>
+            )}
+          </div>
+        )}
       </aside>
     </div>
   )

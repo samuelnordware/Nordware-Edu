@@ -79,7 +79,11 @@ export default function SiteSettings() {
   async function save(e) {
     e.preventDefault()
     setSaving(true)
-    const { error } = await supabase
+    // Evita botao preso em "Publicando" se o servidor nao responder
+    const timeout = new Promise((resolve) =>
+      setTimeout(() => resolve({ error: new Error('O servidor não respondeu. Verifique a conexão e tente novamente.') }), 20000)
+    )
+    const request = supabase
       .from('site_settings')
       .update({
         login_title: form.login_title.trim() || DEFAULT_SITE.login_title,
@@ -90,8 +94,19 @@ export default function SiteSettings() {
         updated_by: user.id,
       })
       .eq('id', 1)
+      .select('id')
+    let result
+    try {
+      result = await Promise.race([request, timeout])
+    } catch (err) {
+      result = { error: err }
+    }
     setSaving(false)
-    if (error) return toastError(error)
+    if (result.error) return toastError(result.error)
+    // Sem linha atualizada = sem permissao (RLS nao gera erro)
+    if (!result.data?.length) {
+      return toastError('Não foi possível salvar. Saia e entre novamente para atualizar seu acesso de ADM Master.')
+    }
     await loadSite(true)
     toast('Personalização publicada.')
   }

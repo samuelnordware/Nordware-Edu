@@ -3,6 +3,7 @@ import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Logo from './Logo'
 import Avatar from './Avatar'
+import ThemeToggle from './ThemeToggle'
 import { ROLE_LABEL } from '../lib/roles'
 
 export default function NavBar() {
@@ -45,15 +46,21 @@ export default function NavBar() {
           {isManager && <NavLink to="/admin/usuarios">Usuários</NavLink>}
           {isMaster && <NavLink to="/personalizar">Personalizar</NavLink>}
         </nav>
+        <ThemeToggle />
         <div className="nav__user" ref={menuRef}>
           <button
-            className="avatar-btn"
+            className="user-btn"
             onClick={() => setOpen((v) => !v)}
             aria-haspopup="menu"
             aria-expanded={open}
             aria-label="Menu da conta"
           >
             <Avatar name={name} url={profile?.avatar_url} size={36} />
+            <span className="user-btn__text">
+              <strong>{name.split(' ')[0]}</strong>
+              <small>{ROLE_LABEL[profile?.role] || ''}</small>
+            </span>
+            <svg className="user-btn__caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
           </button>
           {open && (
             <div className="menu" role="menu">
