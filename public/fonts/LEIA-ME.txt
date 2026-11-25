@@ -1,0 +1,2 @@
+Coloque aqui o arquivo da fonte oficial da Nordware (ex.: NordwareSans.woff2)
+e ajuste o bloco @font-face no inicio de src/styles.css.

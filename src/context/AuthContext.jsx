@@ -1,0 +1,71 @@
+import { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import { supabase } from '../lib/supabase'
+
+const AuthContext = createContext(null)
+
+export function AuthProvider({ children }) {
+  const [session, setSession] = useState(null)
+  const [profile, setProfile] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [recovering, setRecovering] = useState(false)
+
+  const loadProfile = useCallback(async (userId) => {
+    if (!userId) {
+      setProfile(null)
+      return
+    }
+    const { data } = await supabase
+      .from('profiles')
+      .select('id, email, full_name, role')
+      .eq('id', userId)
+      .maybeSingle()
+    setProfile(data)
+  }, [])
+
+  useEffect(() => {
+    let active = true
+    supabase.auth.getSession().then(async ({ data }) => {
+      if (!active) return
+      setSession(data.session)
+      await loadProfile(data.session?.user?.id)
+      setLoading(false)
+    })
+    const { data: sub } = supabase.auth.onAuthStateChange((event, next) => {
+      if (event === 'PASSWORD_RECOVERY') setRecovering(true)
+      setSession(next)
+      // fora do callback para nao bloquear o cliente de auth
+      setTimeout(() => loadProfile(next?.user?.id), 0)
+    })
+    return () => {
+      active = false
+      sub.subscription.unsubscribe()
+    }
+  }, [loadProfile])
+
+  const value = {
+    session,
+    user: session?.user ?? null,
+    profile,
+    isAdmin: profile?.role === 'admin',
+    loading,
+    signIn: (email, password) => supabase.auth.signInWithPassword({ email, password }),
+    signUp: (email, password, fullName) =>
+      supabase.auth.signUp({ email, password, options: { data: { full_name: fullName } } }),
+    resetPassword: (email) =>
+      supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + window.location.pathname }),
+    signOut: () => supabase.auth.signOut(),
+    refreshProfile: () => loadProfile(session?.user?.id),
+    recovering,
+    updatePassword: async (password) => {
+      const res = await supabase.auth.updateUser({ password })
+      if (!res.error) setRecovering(false)
+      return res
+    },
+  }
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+}
+
+export function useAuth() {
+  return useContext(AuthContext)
+}
