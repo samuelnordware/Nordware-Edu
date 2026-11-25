@@ -14,12 +14,21 @@ export default function TopBar() {
         <Link to="/" className="topbar__brand" aria-label="Nordware Edu, Resumo">
           <Logo />
         </Link>
-        <button className="search-trigger" onClick={openPalette}>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
-          <span>Procurar treinamentos e aulas</span>
-          <kbd>{mac ? '⌘ K' : 'Ctrl K'}</kbd>
-        </button>
+        <nav className="tabs-nav" aria-label="Área do aluno">
+          <NavLink to="/" end>Resumo</NavLink>
+          <NavLink to="/cursos">Meus cursos</NavLink>
+          <NavLink to="/salvas">Aulas salvas</NavLink>
+          <NavLink to="/anotacoes">Minhas anotações</NavLink>
+        </nav>
         <div className="topbar__actions">
+          <button
+            className="theme-toggle search-btn"
+            onClick={openPalette}
+            aria-label="Buscar treinamentos e aulas"
+            title={`Buscar (${mac ? '⌘' : 'Ctrl'} + K)`}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
+          </button>
           {isStaff && (
             <Link className="btn btn--ghost btn--sm topbar__admin" to="/admin">
               Painel
@@ -29,12 +38,6 @@ export default function TopBar() {
           <ThemeToggle />
         </div>
       </div>
-      <nav className="tabs-nav" aria-label="Área do aluno">
-        <NavLink to="/" end>Resumo</NavLink>
-        <NavLink to="/cursos">Meus cursos</NavLink>
-        <NavLink to="/salvas">Aulas salvas</NavLink>
-        <NavLink to="/anotacoes">Minhas anotações</NavLink>
-      </nav>
     </header>
   )
 }

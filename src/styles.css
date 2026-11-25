@@ -1069,3 +1069,23 @@ body::after {
   .banner-list li { grid-template-columns: 1fr; }
   .carousel__slide { aspect-ratio: 16 / 8; }
 }
+
+/* Barra superior em uma linha: marca, abas no centro e ações encostadas à direita */
+.topbar__row {
+  max-width: none; height: 68px; grid-template-columns: auto minmax(0, 1fr) auto; gap: 20px;
+}
+.topbar .tabs-nav { justify-content: center; padding: 0; align-self: stretch; align-items: stretch; }
+.topbar .tabs-nav a { display: flex; align-items: center; padding: 0 14px; }
+.topbar .tabs-nav a.active::after { bottom: 0; }
+.search-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.lesson__side { top: 92px; max-height: calc(100vh - 112px); }
+
+@media (max-width: 980px) {
+  .topbar__row { grid-template-columns: auto auto; height: auto; padding-top: 10px; row-gap: 0; }
+  .topbar__actions { grid-column: 2; grid-row: 1; }
+  .topbar .tabs-nav { grid-column: 1 / -1; grid-row: 2; justify-content: flex-start; height: 46px; margin: 0 calc(var(--pad) * -1); padding: 0 var(--pad); }
+  .lesson__side { top: auto; }
+}
+@media (max-width: 520px) {
+  .topbar__admin { display: none; }
+}
