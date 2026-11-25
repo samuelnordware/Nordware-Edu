@@ -20,6 +20,17 @@ export function AuthProvider({ children }) {
       .eq('id', userId)
       .maybeSingle()
     setProfile(data)
+    // registra o ultimo acesso (painel de alunos), no maximo a cada 10 minutos
+    try {
+      const key = `nw-seen-${userId}`
+      const last = Number(sessionStorage.getItem(key) || 0)
+      if (data && Date.now() - last > 600000) {
+        sessionStorage.setItem(key, String(Date.now()))
+        supabase.from('profiles').update({ last_seen_at: new Date().toISOString() }).eq('id', userId).then(() => {})
+      }
+    } catch {
+      /* armazenamento indisponivel */
+    }
   }, [])
 
   useEffect(() => {

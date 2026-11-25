@@ -18,10 +18,11 @@ Tecnologias: React 18, Vite, Supabase (Auth, Postgres com RLS, Storage e Realtim
 3. Em seguida, execute `supabase/seed.sql` (cria os treinamentos Enviando, Roter e Bahn). Execute apenas uma vez.
 4. Execute `supabase/migrations/0002_papeis_e_fotos.sql` (papéis de aluno, professor e gestor, e fotos de perfil).
 5. Execute `supabase/migrations/0003_adm_master_personalizacao.sql` (ADM Master e personalização do site).
-6. Publique a função de gestão de usuários: em **Edge Functions > Deploy a new function > Via Editor**, use o nome `admin-users`, cole o conteúdo de `supabase/functions/admin-users/index.ts` e clique em **Deploy function**. Mantenha a verificação de JWT ligada.
-7. Em **Authentication > Users**, crie o usuário do ADM master (samuel.bagolin@nordware.io) com **Auto Confirm User** marcado, caso ele ainda não exista. Esse e-mail recebe o papel de administrador automaticamente.
-8. Em **Authentication > URL Configuration**, informe a URL do site publicado em **Site URL** e em **Redirect URLs** (necessário para a redefinição de senha).
-9. Para vídeos grandes, ajuste **Storage > Settings > Upload file size limit** conforme o seu plano.
+6. Execute `supabase/migrations/0004_modulos_salvas_anotacoes.sql` (módulos, aulas salvas, anotações, banners e último acesso).
+7. Publique a função de gestão de usuários: em **Edge Functions > Deploy a new function > Via Editor**, use o nome `admin-users`, cole o conteúdo de `supabase/functions/admin-users/index.ts` e clique em **Deploy function**. Mantenha a verificação de JWT ligada.
+8. Em **Authentication > Users**, crie o usuário do ADM master (samuel.bagolin@nordware.io) com **Auto Confirm User** marcado, caso ele ainda não exista. Esse e-mail recebe o papel de administrador automaticamente.
+9. Em **Authentication > URL Configuration**, informe a URL do site publicado em **Site URL** e em **Redirect URLs** (necessário para a redefinição de senha).
+10. Para vídeos grandes, ajuste **Storage > Settings > Upload file size limit** conforme o seu plano.
 
 ## 2. Rodar localmente
 

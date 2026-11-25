@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext'
 import { safeName, uploadSimple } from '../../lib/upload'
 import { formatMinutes } from '../../lib/video'
 import { toast, toastError } from '../../lib/toast'
+import ModulesEditor from '../../components/ModulesEditor'
 import { restRequest } from '../../lib/rest'
 
 const EMPTY = {
@@ -41,10 +42,9 @@ export default function CourseEditor() {
       const { data, error } = await supabase.from('courses').select('*').eq('id', courseId).maybeSingle()
       if (error || !data) {
         toastError(error || 'Treinamento não encontrado.')
-        return navigate('/admin')
+        return navigate('/admin/cursos')
       }
       setForm(data)
-      loadLessons()
     })()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseId])
@@ -113,7 +113,7 @@ export default function CourseEditor() {
     const { error } = await supabase.from('courses').delete().eq('id', courseId)
     if (error) return toastError(error)
     toast('Treinamento excluído.')
-    navigate('/admin')
+    navigate('/admin/cursos')
   }
 
   async function move(i, dir) {
@@ -136,7 +136,7 @@ export default function CourseEditor() {
     <div className="admin">
       <header className="admin__head">
         <div>
-          <Link to="/admin" className="back">
+          <Link to="/admin/cursos" className="back">
             Treinamentos
           </Link>
           <h1>{isNew ? 'Novo treinamento' : form.title || 'Treinamento'}</h1>
@@ -215,48 +215,7 @@ export default function CourseEditor() {
         </div>
       </form>
 
-      {!isNew && (
-        <section className="admin-lessons" aria-labelledby="al-title">
-          <div className="admin__head">
-            <h2 id="al-title">Aulas</h2>
-            <Link className="btn btn--primary btn--sm" to={`/admin/aula/nova?curso=${courseId}`}>
-              Nova aula
-            </Link>
-          </div>
-          {!lessons.length && <p className="empty">Este treinamento ainda não tem aulas.</p>}
-          <ol className="admin-lesson-list">
-            {lessons.map((l, i) => (
-              <li key={l.id}>
-                <span className="lesson-list__num">{i + 1}</span>
-                <div className="admin-lesson-list__info">
-                  <strong>{l.title}</strong>
-                  <small className="muted">
-                    {PROVIDER[l.video_provider]}
-                    {l.duration_minutes ? `, ${formatMinutes(l.duration_minutes)}` : ''}
-                    {!l.is_published ? ', oculta' : ''}
-                  </small>
-                </div>
-                <div className="admin-lesson-list__ctrl">
-                  <button className="icon-btn" onClick={() => move(i, -1)} disabled={i === 0} aria-label="Mover para cima">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6" /></svg>
-                  </button>
-                  <button
-                    className="icon-btn"
-                    onClick={() => move(i, 1)}
-                    disabled={i === lessons.length - 1}
-                    aria-label="Mover para baixo"
-                  >
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
-                  </button>
-                  <Link className="btn btn--ghost btn--sm" to={`/admin/aula/${l.id}`}>
-                    Editar
-                  </Link>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </section>
-      )}
+      {!isNew && <ModulesEditor courseId={courseId} />}
     </div>
   )
 }

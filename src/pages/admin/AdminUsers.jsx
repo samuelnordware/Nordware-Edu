@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext'
 import { ROLES, ROLE_LABEL, functionError } from '../../lib/roles'
 import { toast, toastError } from '../../lib/toast'
 import Avatar from '../../components/Avatar'
+import { timeAgo } from '../../lib/video'
 
 const EMPTY = { full_name: '', email: '', password: '', role: 'student' }
 
@@ -24,7 +25,7 @@ export default function AdminUsers() {
 
   async function load() {
     const [{ data: profiles, error }, { data: progress }] = await Promise.all([
-      supabase.from('profiles').select('id, email, full_name, role, avatar_url, created_at').order('created_at'),
+      supabase.from('profiles').select('id, email, full_name, role, avatar_url, created_at, last_seen_at').order('created_at'),
       supabase.from('lesson_progress').select('user_id').not('completed_at', 'is', null),
     ])
     if (error) toastError(error)
@@ -102,6 +103,34 @@ export default function AdminUsers() {
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
 
+  const month = Date.now() - 30 * 86400000
+  const isActive = (u) => u.last_seen_at && new Date(u.last_seen_at).getTime() > month
+  const summary = {
+    total: users?.length ?? 0,
+    fresh: (users || []).filter((u) => new Date(u.created_at).getTime() > month).length,
+    active: (users || []).filter(isActive).length,
+  }
+
+  function exportCsv() {
+    const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`
+    const rows = [['Nome', 'E-mail', 'Papel', 'Aulas concluídas', 'Cadastro', 'Último acesso']].concat(
+      filtered.map((u) => [
+        u.full_name || '',
+        u.email,
+        ROLE_LABEL[u.role],
+        done.get(u.id) || 0,
+        new Date(u.created_at).toLocaleDateString('pt-BR'),
+        u.last_seen_at ? new Date(u.last_seen_at).toLocaleString('pt-BR') : 'Nunca',
+      ])
+    )
+    const blob = new Blob(['\ufeff' + rows.map((r) => r.map(esc).join(';')).join('\n')], { type: 'text/csv;charset=utf-8' })
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = `usuarios-nordware-edu-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(a.href)
+  }
+
   return (
     <div className="admin">
       <header className="admin__head">
@@ -109,12 +138,21 @@ export default function AdminUsers() {
           <h1>Usuários</h1>
           <p className="muted">Crie acessos para alunos, professores e gestores.</p>
         </div>
-        {!form && (
-          <button className="btn btn--primary" onClick={() => setForm(EMPTY)}>
-            Novo usuário
-          </button>
-        )}
+        <div className="inline-actions">
+          <button className="btn btn--ghost" onClick={exportCsv} disabled={!filtered.length}>Exportar CSV</button>
+          {!form && (
+            <button className="btn btn--primary" onClick={() => setForm(EMPTY)}>
+              Novo usuário
+            </button>
+          )}
+        </div>
       </header>
+
+      <div className="stats">
+        <div className="stat"><span className="stat__label">Total de usuários</span><strong className="stat__value mono">{summary.total}</strong></div>
+        <div className="stat"><span className="stat__label">Novos</span><strong className="stat__value mono">{summary.fresh}</strong><span className="stat__hint">Últimos 30 dias</span></div>
+        <div className="stat"><span className="stat__label">Ativos</span><strong className="stat__value mono">{summary.active}</strong><span className="stat__hint">Acessaram nos últimos 30 dias</span></div>
+      </div>
 
       {form && (
         <form className="panel form new-user" onSubmit={createUser}>
@@ -189,6 +227,7 @@ export default function AdminUsers() {
             <thead>
               <tr>
                 <th scope="col">Usuário</th>
+                <th scope="col">Último acesso</th>
                 <th scope="col">Aulas concluídas</th>
                 <th scope="col">Papel</th>
                 <th scope="col"><span className="sr-only">Ações</span></th>
@@ -206,7 +245,11 @@ export default function AdminUsers() {
                       </span>
                     </div>
                   </td>
-                  <td>{done.get(u.id) || 0}</td>
+                  <td>
+                    <span className={'presence' + (isActive(u) ? ' is-on' : '')} aria-hidden="true" />
+                    <span className="mono">{u.last_seen_at ? timeAgo(u.last_seen_at) : 'Nunca'}</span>
+                  </td>
+                  <td className="mono">{done.get(u.id) || 0}</td>
                   <td>
                     {u.id === user.id ? (
                       <span className="chip chip--brand">{ROLE_LABEL[u.role]} (você)</span>

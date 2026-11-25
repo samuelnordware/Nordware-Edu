@@ -9,7 +9,7 @@ import { toast, toastError } from '../../lib/toast'
 import Avatar from '../../components/Avatar'
 
 async function uploadSiteImage(file, folder) {
-  const blob = await fitImage(file, 1600)
+  const blob = await fitImage(file, folder === 'banners' ? 1920 : 1600)
   const ext = blob.type === 'image/webp' ? 'webp' : blob.type === 'image/png' ? 'png' : 'jpg'
   const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 7)}.${ext}`
   const { error } = await supabase.storage.from('site').upload(path, blob, { contentType: blob.type })
@@ -24,7 +24,7 @@ export default function SiteSettings() {
   const [uploading, setUploading] = useState(null)
 
   useEffect(() => {
-    loadSite(true).then((s) => setForm({ ...DEFAULT_SITE, ...s, login_text: s.login_text || '', hero_image_url: s.hero_image_url || '' }))
+    loadSite(true).then((s) => setForm({ ...DEFAULT_SITE, ...s, login_text: s.login_text || '', hero_image_url: s.hero_image_url || '', home_banners: Array.isArray(s.home_banners) ? s.home_banners : [] }))
   }, [])
 
   if (!form) return <div className="page-loading" aria-busy="true" />
@@ -62,6 +62,34 @@ export default function SiteSettings() {
     setForm((s) => ({ ...s, login_images: s.login_images.filter((_, k) => k !== i) }))
   }
 
+  async function addBanners(e) {
+    const files = [...(e.target.files || [])]
+    e.target.value = ''
+    if (!files.length) return
+    setUploading('banner')
+    try {
+      const added = []
+      for (const f of files) added.push({ image_url: await uploadSiteImage(f, 'banners'), link: '', alt: '' })
+      setForm((s) => ({ ...s, home_banners: [...s.home_banners, ...added] }))
+      toast('Banners adicionados. Salve para publicar.')
+    } catch (err) {
+      toastError(err)
+    } finally {
+      setUploading(null)
+    }
+  }
+
+  const setBanner = (i, k, v) =>
+    setForm((s) => ({ ...s, home_banners: s.home_banners.map((b, j) => (j === i ? { ...b, [k]: v } : b)) }))
+  const moveBanner = (i, dir) =>
+    setForm((s) => {
+      const list = [...s.home_banners]
+      const j = i + dir
+      if (j < 0 || j >= list.length) return s
+      ;[list[i], list[j]] = [list[j], list[i]]
+      return { ...s, home_banners: list }
+    })
+
   async function setHeroImage(e) {
     const file = e.target.files?.[0]
     e.target.value = ''
@@ -91,6 +119,7 @@ export default function SiteSettings() {
           login_images: form.login_images,
           hero_greeting: form.hero_greeting.trim(),
           hero_image_url: form.hero_image_url || null,
+          home_banners: form.home_banners.map((b) => ({ image_url: b.image_url, link: (b.link || '').trim(), alt: (b.alt || '').trim() })),
           updated_by: user.id,
         },
       })
@@ -176,6 +205,42 @@ export default function SiteSettings() {
               <span className="login-preview__btn" />
             </div>
           </div>
+        </section>
+
+        <section className="panel" aria-labelledby="st-banners">
+          <h2 id="st-banners">Carrossel do Resumo</h2>
+          <p className="hint">
+            Com banners cadastrados, o Resumo abre com o carrossel no lugar do destaque do treinamento. Formato
+            recomendado: 1920 x 600 pixels. O link pode ser uma página do site (por exemplo, /treinamento/1) ou um
+            endereço completo.
+          </p>
+          <ul className="banner-list">
+            {form.home_banners.map((b, i) => (
+              <li key={b.image_url + i}>
+                <img src={asset(b.image_url)} alt={`Banner ${i + 1}`} />
+                <div className="banner-list__fields">
+                  <input value={b.link || ''} onChange={(e) => setBanner(i, 'link', e.target.value)} placeholder="Link ao clicar (opcional)" aria-label={`Link do banner ${i + 1}`} />
+                  <input value={b.alt || ''} onChange={(e) => setBanner(i, 'alt', e.target.value)} placeholder="Descrição da imagem, para acessibilidade" aria-label={`Descrição do banner ${i + 1}`} />
+                </div>
+                <div className="thumbs__ctrl">
+                  <button type="button" className="icon-btn" onClick={() => moveBanner(i, -1)} disabled={i === 0} aria-label="Mover para cima">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6" /></svg>
+                  </button>
+                  <button type="button" className="icon-btn" onClick={() => moveBanner(i, 1)} disabled={i === form.home_banners.length - 1} aria-label="Mover para baixo">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+                  </button>
+                  <button type="button" className="icon-btn icon-btn--danger" aria-label="Remover banner"
+                    onClick={() => setForm((s) => ({ ...s, home_banners: s.home_banners.filter((_, j) => j !== i) }))}>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <label className="btn btn--ghost file-btn">
+            {uploading === 'banner' ? 'Enviando banners' : 'Adicionar banners'}
+            <input type="file" multiple accept="image/jpeg,image/png,image/webp" onChange={addBanners} disabled={!!uploading} />
+          </label>
         </section>
 
         <section className="panel" aria-labelledby="st-home">

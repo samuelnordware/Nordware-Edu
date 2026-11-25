@@ -21,11 +21,12 @@ export default function LessonEditor() {
   const [form, setForm] = useState(null)
   const [saving, setSaving] = useState(false)
   const [upload, setUpload] = useState(null) // { name, size, pct }
+  const [modules, setModules] = useState([])
 
   useEffect(() => {
     if (isNew) {
       const courseId = Number(params.get('curso'))
-      if (!courseId) return navigate('/admin')
+      if (!courseId) return navigate('/admin/cursos')
       setForm({
         course_id: courseId,
         title: '',
@@ -35,6 +36,7 @@ export default function LessonEditor() {
         duration_minutes: '',
         is_published: true,
         sort_order: 999,
+        module_id: Number(params.get('modulo')) || null,
       })
       return
     }
@@ -46,11 +48,21 @@ export default function LessonEditor() {
       .then(({ data, error }) => {
         if (error || !data) {
           toastError(error || 'Aula não encontrada.')
-          return navigate('/admin')
+          return navigate('/admin/cursos')
         }
         setForm({ ...data, duration_minutes: data.duration_minutes ?? '' })
       })
   }, [lessonId, isNew, params, navigate])
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useEffect(() => {
+    if (!form?.course_id) return
+    supabase.from('modules').select('id, title').eq('course_id', form.course_id).order('sort_order').order('id')
+      .then(({ data }) => {
+        setModules(data || [])
+        if (data?.length) setForm((f) => (f.module_id ? f : { ...f, module_id: data[0].id }))
+      })
+  }, [form?.course_id])
 
   if (!form) return <div className="page-loading" aria-busy="true" />
 
@@ -92,10 +104,9 @@ export default function LessonEditor() {
     setSaving(true)
     let sort = form.sort_order
     if (isNew) {
-      const { count } = await supabase
-        .from('lessons')
-        .select('id', { count: 'exact', head: true })
-        .eq('course_id', form.course_id)
+      let q = supabase.from('lessons').select('id', { count: 'exact', head: true }).eq('course_id', form.course_id)
+      q = form.module_id ? q.eq('module_id', form.module_id) : q.is('module_id', null)
+      const { count } = await q
       sort = (count || 0) + 1
     }
     const payload = {
@@ -107,6 +118,7 @@ export default function LessonEditor() {
       duration_minutes: form.duration_minutes === '' ? null : Number(form.duration_minutes),
       is_published: form.is_published,
       sort_order: sort,
+      module_id: form.module_id ? Number(form.module_id) : null,
     }
     const res = isNew
       ? await supabase.from('lessons').insert(payload).select('id').single()
@@ -222,6 +234,13 @@ export default function LessonEditor() {
             </div>
           )}
 
+          <div className="field">
+            <label htmlFor="lmod">Módulo</label>
+            <select id="lmod" className="role-select" value={form.module_id || ''} onChange={set('module_id')}>
+              <option value="">Sem módulo</option>
+              {modules.map((m) => <option key={m.id} value={m.id}>{m.title}</option>)}
+            </select>
+          </div>
           <div className="field">
             <label htmlFor="ltitle">Título da aula</label>
             <input id="ltitle" value={form.title} onChange={set('title')} required maxLength={160} />
