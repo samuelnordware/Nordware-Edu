@@ -16,7 +16,7 @@ export function AuthProvider({ children }) {
     }
     const { data } = await supabase
       .from('profiles')
-      .select('id, email, full_name, role, avatar_url')
+      .select('id, email, full_name, role, avatar_url, is_master')
       .eq('id', userId)
       .maybeSingle()
     setProfile(data)
@@ -47,6 +47,8 @@ export function AuthProvider({ children }) {
     user: session?.user ?? null,
     profile,
     isManager: profile?.role === 'manager',
+    // ADM Master: personaliza o site e concede esse acesso
+    isMaster: Boolean(profile?.is_master),
     isTeacher: profile?.role === 'teacher',
     // professor ou gestor: pode publicar conteudo
     isStaff: profile?.role === 'manager' || profile?.role === 'teacher',

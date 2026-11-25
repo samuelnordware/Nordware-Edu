@@ -6,6 +6,7 @@ Plataforma de treinamentos da Nordware no estilo Netflix, com checklist, documen
 - **Professor:** tudo do aluno, mais criar e publicar os próprios treinamentos e moderar os comentários deles.
 - **Gestor:** publica e edita qualquer treinamento, cria, exclui e altera o papel de usuários e redefine senhas.
 - **Todos:** trocam a foto, o nome e a senha em Meu perfil.
+- **ADM Master:** acesso extra que personaliza a tela de login e o destaque da página inicial e concede esse acesso a outras pessoas.
 - **Vídeos:** YouTube (não listado), Vimeo (inclusive privado com código) ou envio do computador para o Supabase Storage.
 
 Tecnologias: React 18, Vite, Supabase (Auth, Postgres com RLS, Storage e Realtime).
@@ -16,10 +17,11 @@ Tecnologias: React 18, Vite, Supabase (Auth, Postgres com RLS, Storage e Realtim
 2. Cole e execute `supabase/migrations/0001_nordware_edu_schema.sql`.
 3. Em seguida, execute `supabase/seed.sql` (cria os treinamentos Enviando, Roter e Bahn). Execute apenas uma vez.
 4. Execute `supabase/migrations/0002_papeis_e_fotos.sql` (papéis de aluno, professor e gestor, e fotos de perfil).
-5. Publique a função de gestão de usuários: em **Edge Functions > Deploy a new function > Via Editor**, use o nome `admin-users`, cole o conteúdo de `supabase/functions/admin-users/index.ts` e clique em **Deploy function**. Mantenha a verificação de JWT ligada.
-6. Em **Authentication > Users**, crie o usuário do ADM master (samuel.bagolin@nordware.io) com **Auto Confirm User** marcado, caso ele ainda não exista. Esse e-mail recebe o papel de administrador automaticamente.
-7. Em **Authentication > URL Configuration**, informe a URL do site publicado em **Site URL** e em **Redirect URLs** (necessário para a redefinição de senha).
-8. Para vídeos grandes, ajuste **Storage > Settings > Upload file size limit** conforme o seu plano.
+5. Execute `supabase/migrations/0003_adm_master_personalizacao.sql` (ADM Master e personalização do site).
+6. Publique a função de gestão de usuários: em **Edge Functions > Deploy a new function > Via Editor**, use o nome `admin-users`, cole o conteúdo de `supabase/functions/admin-users/index.ts` e clique em **Deploy function**. Mantenha a verificação de JWT ligada.
+7. Em **Authentication > Users**, crie o usuário do ADM master (samuel.bagolin@nordware.io) com **Auto Confirm User** marcado, caso ele ainda não exista. Esse e-mail recebe o papel de administrador automaticamente.
+8. Em **Authentication > URL Configuration**, informe a URL do site publicado em **Site URL** e em **Redirect URLs** (necessário para a redefinição de senha).
+9. Para vídeos grandes, ajuste **Storage > Settings > Upload file size limit** conforme o seu plano.
 
 ## 2. Rodar localmente
 

@@ -13,10 +13,16 @@ export default {
     if (!callerId) return fail('Sessão inválida. Entre novamente.', 401)
 
     // Confere no banco se quem chamou e gestor
-    const { data: caller } = await admin.from('profiles').select('role').eq('id', callerId).maybeSingle()
+    const { data: caller } = await admin.from('profiles').select('role, is_master').eq('id', callerId).maybeSingle()
     if (caller?.role !== 'manager') return fail('Somente gestores podem gerenciar usuários.', 403)
 
     const body = await req.json().catch(() => ({}))
+
+    // Somente um ADM Master altera senha ou exclui outro ADM Master
+    if (body.user_id && !caller.is_master) {
+      const { data: target } = await admin.from('profiles').select('is_master').eq('id', body.user_id).maybeSingle()
+      if (target?.is_master) return fail('Somente um ADM Master pode alterar outro ADM Master.', 403)
+    }
 
     if (body.action === 'create') {
       const email = String(body.email || '').trim().toLowerCase()

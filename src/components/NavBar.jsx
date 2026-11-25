@@ -6,7 +6,7 @@ import Avatar from './Avatar'
 import { ROLE_LABEL } from '../lib/roles'
 
 export default function NavBar() {
-  const { profile, isStaff, isManager, signOut } = useAuth()
+  const { profile, isStaff, isManager, isMaster, signOut } = useAuth()
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
   const menuRef = useRef(null)
@@ -43,6 +43,7 @@ export default function NavBar() {
             </NavLink>
           )}
           {isManager && <NavLink to="/admin/usuarios">Usuários</NavLink>}
+          {isMaster && <NavLink to="/personalizar">Personalizar</NavLink>}
         </nav>
         <div className="nav__user" ref={menuRef}>
           <button
@@ -58,7 +59,7 @@ export default function NavBar() {
             <div className="menu" role="menu">
               <div className="menu__head">
                 <strong>{name}</strong>
-                <span>{ROLE_LABEL[profile?.role] || ''}</span>
+                <span>{ROLE_LABEL[profile?.role] || ''}{isMaster ? ', ADM Master' : ''}</span>
               </div>
               <button role="menuitem" onClick={() => { setOpen(false); navigate('/perfil') }}>
                 Meu perfil
@@ -71,6 +72,11 @@ export default function NavBar() {
               {isManager && (
                 <button role="menuitem" onClick={() => { setOpen(false); navigate('/admin/usuarios') }}>
                   Usuários
+                </button>
+              )}
+              {isMaster && (
+                <button role="menuitem" onClick={() => { setOpen(false); navigate('/personalizar') }}>
+                  Personalizar site
                 </button>
               )}
               <button role="menuitem" onClick={() => signOut().then(() => navigate('/login'))}>

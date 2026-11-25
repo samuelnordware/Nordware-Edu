@@ -12,6 +12,7 @@ import CourseEditor from './pages/admin/CourseEditor'
 import LessonEditor from './pages/admin/LessonEditor'
 import AdminUsers from './pages/admin/AdminUsers'
 import Profile from './pages/Profile'
+import SiteSettings from './pages/admin/SiteSettings'
 
 function Splash() {
   return (
@@ -43,6 +44,13 @@ function RequireStaff() {
   return <Outlet />
 }
 
+function RequireMaster() {
+  const { isMaster, profile } = useAuth()
+  if (!profile) return <Splash />
+  if (!isMaster) return <Navigate to="/" replace />
+  return <Outlet />
+}
+
 function RequireManager() {
   const { isManager, profile } = useAuth()
   if (!profile) return <Splash />
@@ -60,6 +68,9 @@ export default function App() {
           <Route path="treinamento/:courseId" element={<CoursePage />} />
           <Route path="aula/:lessonId" element={<LessonPage />} />
           <Route path="perfil" element={<Profile />} />
+          <Route element={<RequireMaster />}>
+            <Route path="personalizar" element={<SiteSettings />} />
+          </Route>
           <Route path="admin" element={<RequireStaff />}>
             <Route index element={<AdminCourses />} />
             <Route path="treinamento/:courseId" element={<CourseEditor />} />

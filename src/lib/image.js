@@ -20,3 +20,25 @@ export function squareJpeg(file, size = 320) {
     img.src = url
   })
 }
+
+// Reduz a imagem para no maximo maxWidth de largura, em JPEG
+export function fitJpeg(file, maxWidth = 1600) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file)
+    const img = new Image()
+    img.onload = () => {
+      const scale = Math.min(1, maxWidth / img.width)
+      const canvas = document.createElement('canvas')
+      canvas.width = Math.round(img.width * scale)
+      canvas.height = Math.round(img.height * scale)
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height)
+      URL.revokeObjectURL(url)
+      canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('Não foi possível ler a imagem.'))), 'image/jpeg', 0.86)
+    }
+    img.onerror = () => {
+      URL.revokeObjectURL(url)
+      reject(new Error('Arquivo de imagem inválido.'))
+    }
+    img.src = url
+  })
+}

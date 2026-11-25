@@ -7,10 +7,12 @@ import { formatMinutes } from '../lib/video'
 import { toastError } from '../lib/toast'
 import CourseRow from '../components/CourseRow'
 import ProgressBar from '../components/ProgressBar'
+import { useSite, greeting } from '../lib/site'
 
 export default function Browse() {
   const { user, isStaff, profile } = useAuth()
   const [courses, setCourses] = useState(null)
+  const site = useSite()
 
   useEffect(() => {
     loadCatalog(user.id).then(setCourses).catch(toastError)
@@ -61,10 +63,10 @@ export default function Browse() {
     <div className="browse">
       <section className="hero" style={{ '--accent': hero.accent_color }}>
         <div className="hero__media" aria-hidden="true">
-          {hero.cover_url && <img src={asset(hero.cover_url)} alt="" />}
+          {(site?.hero_image_url || hero.cover_url) && <img src={asset(site?.hero_image_url || hero.cover_url)} alt="" />}
         </div>
         <div className="hero__content">
-          {firstName && <p className="hero__hello">Olá, {firstName}</p>}
+          {greeting(site, firstName) && <p className="hero__hello">{greeting(site, firstName)}</p>}
           <h1>{hero.title}</h1>
           {hero.subtitle && <p className="hero__sub">{hero.subtitle}</p>}
           {hero.description && <p className="hero__desc">{hero.description}</p>}

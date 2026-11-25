@@ -3,6 +3,7 @@ import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Logo from '../components/Logo'
 import { asset } from '../lib/supabase'
+import { useSite, loginImages } from '../lib/site'
 
 const allowSignup = import.meta.env.VITE_ALLOW_SIGNUP !== 'false'
 
@@ -22,6 +23,7 @@ export default function Login() {
   const [msg, setMsg] = useState(null)
   const navigate = useNavigate()
   const location = useLocation()
+  const site = useSite()
 
   if (!loading && user) return <Navigate to={location.state?.from?.pathname || '/'} replace />
 
@@ -46,22 +48,24 @@ export default function Login() {
     if (mode === 'reset') setMsg({ kind: 'ok', text: 'Enviamos um link de redefinição para o seu e-mail.' })
   }
 
-  const covers = ['covers/enviando.jpg', 'covers/roter.jpg', 'covers/bahn.jpg']
+  const covers = loginImages(site)
+  const wall = Array.from({ length: Math.max(9, covers.length) }, (_, i) => covers[i % covers.length])
 
   return (
     <div className="login">
       <div className="login__wall" aria-hidden="true">
-        {[...covers, ...covers, ...covers].map((c, i) => (
+        {wall.map((c, i) => (
           <img key={i} src={asset(c)} alt="" />
         ))}
       </div>
       <div className="login__panel">
         <Logo size="lg" />
         <h1>
-          {mode === 'signin' && 'Entre para continuar seus treinamentos'}
+          {mode === 'signin' && (site?.login_title || 'Entre para continuar seus treinamentos')}
           {mode === 'signup' && 'Crie sua conta de aluno'}
           {mode === 'reset' && 'Redefina sua senha'}
         </h1>
+        {mode === 'signin' && site?.login_text && <p className="login__text">{site.login_text}</p>}
         <form onSubmit={submit} className="form">
           {mode === 'signup' && (
             <div className="field">
